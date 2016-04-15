@@ -2,11 +2,11 @@ var React = require('react-native');
 var {
   View,
   Text,
-  TouchableHighlight,
   TextInput,
-  Dimensions,
+  TouchableHighlight,
   ScrollView,
-  StyleSheet
+  StyleSheet,
+  Dimensions
 } = React;
 
 var SB = require('sendbird');
@@ -17,15 +17,87 @@ module.exports = React.createClass({
   getInitialState: function() {
     return {
       message: '',
-      messageList: []
+      messageList: [],
+      user: null,
+      channel: null
     };
   },
+
   componentWillMount: function() {
+    sendbird.getUserInfo((data) => {
+      this.setState({user: data});
+    });
     sendbird.events.onMessageReceived = (obj) => {
-      this.setState({messageList: this.state.messageList.concat([obj])});
+      var _position = 'left';
+      if (obj.user && obj.user.guest_id == this.state.user.guest_id) {
+        _position = 'right';
+      }
+      var newMessage = {
+        text: obj.message,
+        name: obj.user.name,
+        image: {uri: obj.user.image},
+        position: _position,
+        date: new Date(obj.ts)
+      }
+      this.setState({messageList: this.state.messageList.concat([newMessage])});
     };
+  },
+
+  componentDidMount: function() {
+    // Get the previous messages
     this.getMessages();
   },
+
+  getMessages: function() {
+    sendbird.getMessageLoadMore({
+      limit: 40,
+      successFunc: (data) => {
+        var _messageList = [];
+          data.messages.reverse().forEach((msg, index) => {
+            var _position = 'left';
+            if (msg.payload.user && msg.payload.user.guest_id == this.state.user.guest_id) {
+              _position = 'right';
+            }
+            if(sendbird.isMessage(msg.cmd)) {
+              _messageList.push({
+                text: msg.payload.message,
+                name: msg.payload.user.name,
+                image: {uri: msg.payload.user.image},
+                position: _position,
+                date: new Date(msg.payload.ts)
+              });
+            } else if (sendbird.isFileMessage(msg.cmd)) {
+              _messageList.push({
+                text: msg.payload.name,
+                name: msg.payload.user.name,
+                image: {uri: msg.payload.user.image},
+                position: _position,
+                date: new Date(msg.payload.ts)
+              });
+            }
+      });
+
+      this.setState({ messageList: _messageList.concat(this.state.messageList) });
+    },
+    errorFunc: (status, error) => {
+      console.error(status, error);
+    }
+  });
+  },
+
+  onBackBTNPress: function() {
+    // Close the connection with sendbird
+    sendbird.disconnect();
+    // Pop back to the previous screen
+    this.props.navigator.pop();
+  },
+
+  onSendBTNPress: function() {
+    // Send a message
+    sendbird.message(this.state.message);
+    this.setState({message: ''});
+  },
+
   render: function() {
     var list = this.state.messageList.map((item, index) => {
       return (
@@ -34,8 +106,8 @@ module.exports = React.createClass({
           key={index}
           >
           <Text style={this.nameLabel}>
-            {item.user.name}
-            <Text style={styles.messageLabel}> : {item.message}</Text>
+            {item.name}
+            <Text style={styles.messageLabel}> : {item.text}</Text>
           </Text>
         </View>
       );
@@ -44,22 +116,19 @@ module.exports = React.createClass({
     return (
       <View style={styles.container}>
         <View style={styles.topContainer}>
-          <TouchableHighlight
-            underlayColor={'#4e4273'}
-            onPress={this.onBackPress}
+          <TouchableHighlight onPress={this.onBackBTNPress}
             style={{marginLeft: 15}}
-            >
-            <Text style={{color: '#fff'}}>&lt; Back</Text>
+            underlayColor={'#4e4273'}>
+            <Text style={{color: 'white'}}>&lt; Back</Text>
           </TouchableHighlight>
         </View>
         <View style={styles.chatContainer}>
           <ScrollView
-            ref={(c) => this._scrollView = c}
-            onScroll={this.handleScroll}
+            ref={(scrollView) => this._scrollView = scrollView}
+            onScroll={this.onScrollHandle}
             scrollEventThrottle={16}
-            onContentSizeChange={(e) => {}}
-          >
-          {list}
+            onContentSizeChange={(e) => {}}>
+            {list}
           </ScrollView>
         </View>
         <View style={styles.inputContainer}>
@@ -68,12 +137,12 @@ module.exports = React.createClass({
               style={styles.input}
               value={this.state.message}
               onChangeText={(text) => this.setState({message: text})}
-              />
+            />
           </View>
           <View style={styles.sendContainer}>
             <TouchableHighlight
               underlayColor={'#4e4273'}
-              onPress={() => this.onSendPress()}
+              onPress={() => this.onSendBTNPress()}
               >
               <Text style={styles.sendLabel}>SEND</Text>
             </TouchableHighlight>
@@ -81,32 +150,8 @@ module.exports = React.createClass({
         </View>
       </View>
     );
-  },
-  onBackPress: function() {
-    sendbird.disconnect();
-    this.props.navigator.pop();
-  },
-  onSendPress: function() {
-    sendbird.message(this.state.message);
-    this.setState({message: ''});
-  },
-  getMessages: function() {
-    sendbird.getMessageLoadMore({
-      limit: 100,
-      successFunc: (data) => {
-        var _messageList = data["messages"];
-        data.messages.reverse().forEach(function(msg, index){
-          if(sendbird.isMessage(msg.cmd)) {
-            _messageList.push(msg.payload);
-          }
-        });
-        this.setState({ messageList: _messageList.concat(this.state.messageList) });
-      },
-      errorFunc: (status, error) => {
-        console.log(status, error);
-      }
-    });
   }
+
 });
 
 var styles = StyleSheet.create({
