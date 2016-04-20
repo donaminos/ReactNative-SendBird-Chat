@@ -10,6 +10,7 @@ var {
 } = React;
 
 var sendbird = require('sendbird').getInstance();
+var NavigationBar = require('./Common/navigationBar');
 
 // Constants
 var PULLDOWN_DISTANCE = 40;
@@ -87,6 +88,10 @@ module.exports = React.createClass({
     );
   },
 
+  onBackPress: function() {
+    this.props.navigator.immediatelyResetRouteStack([{ name: 'login' }]);
+  },
+
   renderRow(rowData) {
     return (
       <TouchableHighlight onPress={() => this.onChannelPress(rowData.channel_url)}>
@@ -106,6 +111,9 @@ module.exports = React.createClass({
   render: function() {
     return (
       <View style={styles.container}>
+        <NavigationBar onBackPress={this.onBackPress}
+          title='Channels'
+        />
         <View style={styles.listContainer}>
           <ListView
             enableEmptySections={true}

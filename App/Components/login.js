@@ -6,8 +6,8 @@ var {
   TouchableHighlight,
   StyleSheet
 } = React;
-var SB = require('sendbird');
-var sendbird = SB.getInstance();
+
+var sendbird = require('sendbird').getInstance();
 
 // App Keys
 var appId = 'A05BA4C7-2F99-4F9A-B6E6-A71B9A6D889B';
@@ -31,7 +31,7 @@ module.exports = React.createClass({
       image_url: "",
       access_token: "",
       successFunc: (data) => {
-        this.props.navigator.push({ name: 'channel' });
+        this.props.navigator.immediatelyResetRouteStack([{ name: 'channel' }]);
       },
       errorFunc: (status, error) => {
         this.setState({username: ''});
@@ -64,7 +64,7 @@ var styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'stretch',
-    backgroundColor: '#6E5BAA'
+    backgroundColor: '#232937'
   },
   loginContainer: {
     flex: 1,
@@ -87,10 +87,10 @@ var styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 1,
     borderRadius: 5,
-    borderColor: '#328FE6',
+    borderColor: '#0082FA',
     padding: 10,
     marginTop: 10,
-    backgroundColor: '#32c5e6'
+    backgroundColor: '#0082FA'
   },
   label: {
     width: 230,

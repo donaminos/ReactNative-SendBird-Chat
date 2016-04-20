@@ -8,6 +8,8 @@
   "dependencies": {
     "react": "^0.14.8",
     "react-native": "^0.23.1",
-    "sendbird": "^2.3.0"
+    "react-native-gifted-spinner": "0.0.3",
+    "sendbird": "^2.3.0",
+    "react-native-button": "1.4.2"
   }
 }
