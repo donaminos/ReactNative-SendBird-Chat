@@ -19,6 +19,10 @@ var sendbird = require('sendbird').getInstance();
 const NUMBER_OF_LOADED_MESSAGES = 10;
 
 module.exports = React.createClass({
+  listHeight: 0,
+    footerY: 0,
+    loadMoreY: 0,
+    firstDisplay: true,
 
   getInitialState: function() {
     return {
@@ -57,7 +61,13 @@ module.exports = React.createClass({
         date: new Date(obj.ts)
       }
       // Append new message to the existing message list
-      this.setState({messageList: this.state.messageList.concat([newMessage])});
+      this.setState({messageList: this.state.messageList.concat([newMessage])}, () => {
+        if (!this.firstDisplay && obj.user.guest_id == this.state.user.guest_id) {
+          setTimeout(()=>{
+            this.scrollToBottom();
+          }, 500);
+        }
+      });
       // Mark this channel's messages as read
       sendbird.markAsRead(this.state.channel.channel_url);
     };
@@ -107,9 +117,13 @@ module.exports = React.createClass({
                 }
               });
               // Store new messages
-              this.setState({messageList: newMessages.concat(this.state.messageList)}, () => {
-                // Finish loading, then scroll to bottom of the chat box
-                this.setState({isLoading: false});
+              this.setState({ messageList: newMessages.concat(this.state.messageList) }, () => {
+                this.setState({isLoading: false}, () => {
+                  if (this.firstDisplay) {
+                    this.firstDisplay = false;
+                    setTimeout(() => {this.scrollWithoutAnimationToBottom()}, 500);
+                  }
+                });
               });
             },
             errorFunc: (status, error) => {
@@ -124,6 +138,19 @@ module.exports = React.createClass({
       sendbird.message(message);
       this.setState({message: ''});
     },
+
+    scrollWithoutAnimationToBottom: function() {
+    if (this.listHeight && this.footerY && this.footerY > this.listHeight) {
+      var scrollDistance = this.listHeight - this.footerY;
+      this._Messenger.scrollResponder.scrollTo({x: 0, y: -scrollDistance, animated: false});
+    }
+  },
+  scrollToBottom: function() {
+    if (this.listHeight && this.footerY && this.footerY > this.listHeight) {
+      var scrollDistance = this.listHeight - this.footerY;
+      this._Messenger.scrollResponder.scrollTo({x: 0, y: -scrollDistance, animated: true});
+    }
+  },
 
   render: function() {
     // If the channel's data or guest_id hasn't been loaded yet,
