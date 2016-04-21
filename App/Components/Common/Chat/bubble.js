@@ -15,59 +15,46 @@ export default class Bubble extends React.Component {
     if (this.props.renderCustomText) {
       return this.props.renderCustomText(text, position);
     } else {
-      if (text) {
-        // Message contains text
-        var otherData = this.props.otherData;
-
-        if (otherData) {
-          // MESSAGE CONTAINS OTHER DATA
-          // Other Data contains Image data uri
-          if (this.isDataURL(otherData)) {
-            return (
-              <View>
-                <Text style={[styles.text, (position === 'left' ? styles.textLeft : styles.textRight)]}>
-                  {text}
-                  </Text>
-                <Image style={styles.imageMessage} source={{uri: otherData}} />
-              </View>
-            )
-          } else if (this.isHTMLString(text)) {
-            // The text is a HTML string
-           console.log('HTML: ' + text);
-           return (
-             <HTMLView
-               value={text}
-             />
-           )
-          }
-        } else {
-          if (this.isHTMLString(text)) {
-            // The text is a HTML string
-           console.log('HTML: ' + text);
-           return (
-             <HTMLView
-               value={text}
-             />
-           )
-          } else {
-            // ONLY-TEXT message
-            return (
-              <Text style={[styles.text, (position === 'left' ? styles.textLeft : styles.textRight)]}>
-                {text}
-                </Text>
-            );
-         }
-        }
-      } else if (this.props.otherData) {
-        return (
-          <Image style={styles.imageMessage} source={{uri: this.props.otherData}} />
-        )
-      } else {
-        // NOTHING TO RENDER
-        return null;
-      }
+      return (
+        <View>
+          {this.renderText(text, position)}
+          {this.renderOtherData(this.props.otherData)}
+        </View>
+      )
     }
 
+  }
+
+  renderText(text, position) {
+    if (text && position) {
+      if (this.isHTMLString(text)) {
+       return (
+         <HTMLView
+           value={text}
+         />
+       )
+     } else {
+       return (
+         <Text style={[styles.text, (position === 'left' ? styles.textLeft : styles.textRight)]}>
+           {text}
+           </Text>
+       );
+     }
+    }
+    return null;
+  }
+
+  renderOtherData(otherData) {
+    if (otherData) {
+      // MESSAGE CONTAINS OTHER DATA
+      // Other Data contains Image data uri
+      if (this.isDataURL(otherData)) {
+        return (
+          <Image style={styles.imageMessage} source={{uri: otherData}} />
+        )
+      }
+    }
+    return null;
   }
 
   render(){
