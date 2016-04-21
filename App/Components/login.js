@@ -16,7 +16,7 @@ var apiToken = '63d1c03ec0da695e1dfb5d9dca10ded53e8b4c95';
 module.exports = React.createClass({
   componentWillMount: function() {
     // Enable sendbird debug-mode log
-    sendbird.setDebugMessage(true);
+    sendbird.setDebugMessage(false);
   },
   getInitialState: function() {
     return {
