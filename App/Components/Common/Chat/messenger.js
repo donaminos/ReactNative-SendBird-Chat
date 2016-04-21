@@ -15,6 +15,7 @@ var {
 } = React;
 
 var Button = require('react-native-button');
+var ImagePickerManager = require('NativeModules').ImagePickerManager;
 
 module.exports = React.createClass({
   firstDisplay: true,
@@ -34,6 +35,7 @@ module.exports = React.createClass({
       initialMessages: [],
       messages: [],
       handleSend: (message, rowID) => {},
+      onCustomSend: (message, otherData) => {},
       maxHeight: Dimensions.get('window').height,
       senderName: 'Sender',
       sendButtonText: 'Send',
@@ -83,6 +85,7 @@ module.exports = React.createClass({
     return {
       dataSource: ds.cloneWithRows([]),
       text: '',
+      photoSource: null,
       disabled: true,
       height: new Animated.Value(this.listViewMaxHeight),
       isLoadingEarlierMessages: false,
@@ -186,6 +189,12 @@ module.exports = React.createClass({
     if (this.props.hideTextInput === false) {
       return (
         <View style={this.styles.textInputContainer}>
+        <Button
+          style={this.styles.uploadButton}
+          onPress={this.onUploadPhoto}
+        >
+          {'Upload'}
+        </Button>
           <TextInput
             style={this.styles.textInput}
             placeholder={this.props.placeholder}
@@ -349,13 +358,59 @@ module.exports = React.createClass({
       position: 'right',
       date: new Date(),
     };
+
     if (this.props.onCustomSend) {
-      this.props.onCustomSend(message);
+      this.props.onCustomSend(message, this.state.photoSource);
     } else {
       var rowID = this.appendMessage(message);
       this.props.handleSend(message, rowID);
       this.onChangeText('');
     }
+  },
+
+  onUploadPhoto: function() {
+    var options = {
+      title: 'Select Photo', // specify null or empty string to remove the title
+      cancelButtonTitle: 'Cancel',
+      takePhotoButtonTitle: 'Take Photo...', // specify null or empty string to remove this button
+      chooseFromLibraryButtonTitle: 'Choose from Library...', // specify null or empty string to remove this button
+      cameraType: 'back', // 'front' or 'back'
+      mediaType: 'photo', // 'photo' or 'video'
+
+      maxWidth: 100, // photos only
+      maxHeight: 100, // photos only
+      aspectX: 1, // android only - aspectX:aspectY, the cropping image's ratio of width to height
+      aspectY: 1, // android only - aspectX:aspectY, the cropping image's ratio of width to height
+      quality: 0.8, // 0 to 1, photos only
+      noData: false, // photos only - disables the base64 `data` field from being generated (greatly improves performance on large photos)
+      storageOptions: { // if this key is provided, the image will get saved in the documents directory on ios, and the pictures directory on android (rather than a temporary directory)
+        skipBackup: true, // ios only - image will NOT be backed up to icloud
+        path: 'images' // ios only - will save image at /Documents/images rather than the root
+      }
+    };
+
+    ImagePickerManager.showImagePicker(options, (response) => {
+
+      if (response.didCancel) {
+        console.log('User cancelled image picker');
+        this.setState({disabled: true});
+      }
+      else if (response.error) {
+        console.log('ImagePickerManager Error: ', response.error);
+      }
+      else if (response.customButton) {
+        console.log('User tapped custom button: ', response.customButton);
+      }
+      else {
+        // You can display the image using either data:
+        const source = 'data:image/jpeg;base64,' + response.data;
+        console.log('Response = ', response);
+        this.setState({
+          photoSource: source,
+          disabled: false
+        });
+      }
+    });
   },
 
   // KEYBOARD
@@ -421,6 +476,10 @@ module.exports = React.createClass({
       sendButton: {
         marginTop: 11,
         marginLeft: 10,
+      },
+      uploadButton: {
+        marginTop: 11,
+        marginRight: 10,
       },
       date: {
         color: '#aaaaaa',

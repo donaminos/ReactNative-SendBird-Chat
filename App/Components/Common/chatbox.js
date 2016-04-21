@@ -52,6 +52,7 @@ module.exports = React.createClass({
         text: obj.message,
         name: obj.user.name,
         image: {uri: obj.user.image},
+        otherData: obj.data,
         position: _position,
         date: new Date(obj.ts)
       }
@@ -78,6 +79,7 @@ module.exports = React.createClass({
         sendbird.getMessageLoadMore({
           limit: NUMBER_OF_LOADED_MESSAGES,
             successFunc: (data) => {
+              console.log(data);
               var newMessages = [];
               data.messages.reverse().forEach((msg, index) => {
                 var _position = 'left';
@@ -89,6 +91,7 @@ module.exports = React.createClass({
                     text: msg.payload.message,
                     name: msg.payload.user.name,
                     image: {uri: msg.payload.user.image},
+                    otherData: msg.payload.data,
                     position: _position,
                     date: new Date(msg.payload.ts)
                   });
@@ -97,6 +100,7 @@ module.exports = React.createClass({
                     text: msg.payload.name,
                     name: msg.payload.user.name,
                     image: {uri: msg.payload.user.image},
+                    otherData: msg.payload.data,
                     position: _position,
                     date: new Date(msg.payload.ts)
                   });
@@ -152,9 +156,13 @@ module.exports = React.createClass({
         submitOnReturn={true}
         loadEarlierMessagesButton={false}
 
-        onCustomSend={(message) => {
+        onCustomSend={(message, otherData) => {
           this._Messenger.onChangeText('');
-          sendbird.message(message.text);
+          if (typeof otherData !== 'undefined') {
+            sendbird.messageWithData(message.text, otherData);
+          } else {
+            sendbird.message(message.text);
+          }
         }}
 
         onLayout={(event) => {

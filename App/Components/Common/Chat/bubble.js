@@ -13,11 +13,12 @@ let styles = StyleSheet.create({
   },
   text: {
     color: '#222222',
+    marginBottom: 5,
   },
   textLeft: {
   },
   textRight: {
-    
+
   },
   bubbleLeft: {
     marginRight: 70,
@@ -32,7 +33,9 @@ let styles = StyleSheet.create({
   bubbleError: {
     backgroundColor: '#e01717'
   },
-
+  imageMessage: {
+    width: 100, height: 100
+  },
 });
 
 export default class Bubble extends React.Component {
@@ -45,16 +48,33 @@ export default class Bubble extends React.Component {
     Object.assign(styles, this.props.styles);
   }
 
-  renderText(text = "", position) {
-
+  renderMessage(text = "", position) {
     if (this.props.renderCustomText) {
       return this.props.renderCustomText(text, position);
+    } else {
+      if (this.props.otherData && text) {
+        var imageData = this.props.otherData;
+        return (
+          <View>
+            <Text style={[styles.text, (position === 'left' ? styles.textLeft : styles.textRight)]}>
+              {text}
+              </Text>
+            <Image style={styles.imageMessage} source={{uri: imageData}} />
+          </View>
+        )
+      } else if (this.props.otherData) {
+        return (
+          <Image style={styles.imageMessage} source={{uri: this.props.otherData}} />
+        )
+      } else {
+        return (
+          <Text style={[styles.text, (position === 'left' ? styles.textLeft : styles.textRight)]}>
+            {text}
+          </Text>
+        );
+      }
     }
-    return (
-      <Text style={[styles.text, (position === 'left' ? styles.textLeft : styles.textRight)]}>
-        {text}
-      </Text>
-    );
+
   }
 
   render(){
@@ -68,7 +88,7 @@ export default class Bubble extends React.Component {
         (this.props.position === 'left' ? styles.bubbleLeft : styles.bubbleRight),
         (this.props.status === 'ErrorButton' ? styles.bubbleError : null),
         flexStyle]}>
-        {this.renderText(this.props.text, this.props.position)}
+        {this.renderMessage(this.props.text, this.props.position)}
       </View>
     )
   }
